@@ -1,0 +1,20 @@
+{
+  "Group": "Buuz135",
+  "Name": "BetterModlist",
+  "Version": "1.0.0",
+  "Description": "Adds a better modlist to the game",
+  "Authors": [
+    {
+      "Name": "Buuz135"
+    }
+  ],
+  "Website": "website",
+  "ServerVersion": "*",
+  "Dependencies": {
+    "Hytale:EntityModule": "*"
+  },
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "com.buuz135.bettermodlist.Main",
+  "IncludesAssetPack": true
+}

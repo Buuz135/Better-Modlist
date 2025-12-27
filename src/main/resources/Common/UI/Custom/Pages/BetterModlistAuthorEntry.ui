@@ -1,0 +1,15 @@
+$C = "../Common.ui";
+Group {
+  Label #AuthorName {
+  Padding: (Left: 6, Right: 6, Top: 2, Bottom: 2);
+  Style: (
+    FontSize: 14,
+    TextColor: #ffffffff
+  );
+  Anchor: (Left: 2, Vertical: 0);
+  Background: (Color: #ec8a1a83);
+  OutlineColor: #ec8a1ade;
+  OutlineSize: 1.5;
+  ContentHeight: 10;
+}
+}

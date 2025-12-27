@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.3'
+}
+
+version = project.version;
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    options.addStringOption('Xdoclint:-missing', '-quiet')
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation(files(System.getProperty("user.home") + "/AppData/Roaming/Hytale/install/release/package/game/$game_build/Server/HytaleServer.jar"))
+}
+
+test {
+    useJUnitPlatform()
+}
+
+processResources {
+
+}
+
+def serverRunDir = file("$projectDir/run")
+
+idea.project.settings.runConfigurations {
+    'HytaleServer'(org.jetbrains.gradle.ext.Application) {
+        mainClass = 'com.hypixel.hytale.Main'
+        moduleName = project.idea.module.name + '.main'
+        programParameters = "--allow-op --disable-sentry --assets=$hytaleHome/$patchline/package/game/latest/Assets.zip --mods=${file("src/main/").absolutePath}  --auth-mode insecure"
+        workingDirectory = serverRunDir.absolutePath
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    if (providers.environmentVariable("HT_MAVEN_USERNAME").present) {
+        repositories {
+            maven() {
+                url = "https://maven.hytale-modding.info/releases"
+                credentials {
+                    username = providers.environmentVariable("HT_MAVEN_USERNAME").get()
+                    password = providers.environmentVariable("HT_MAVEN_PASSWORD").get()
+                }
+            }
+        }
+    }
+
+}

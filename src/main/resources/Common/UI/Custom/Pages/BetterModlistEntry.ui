@@ -1,0 +1,128 @@
+$C = "../Common.ui";
+Group {
+
+  LayoutMode: Left;
+  Anchor: (Bottom: 5);
+  Background: $C.@InputBoxBackground;
+  Padding: (Top: 4, Bottom: 4);
+
+
+  Group #ModLogo{
+    Anchor: (Width: 96, Height: 96, Left: 4);
+    Background: "../Buuz135_BetterModlist.png";
+    Padding: (Full: 5);
+  }
+
+  Group {
+  LayoutMode: Top;
+  FlexWeight: 1;
+
+  Group {
+    LayoutMode: Left;
+    Label #ModName {
+      Style: (
+        FontSize: 16,
+        RenderBold: true,
+        TextColor: #93844c
+      );
+      Anchor: (Left: 10, Top: 2);
+      Padding: (Right: 5);
+    
+    }
+    Label #ModVersion {
+      Style: (
+        FontSize: 12,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Anchor: (Left: 2, Top: 4, Bottom: 2);
+      Padding: (Left: 6, Right: 6, Top: 1, Bottom: 0);
+      Background: (Color: #ec8a1a83);
+      OutlineColor: #ec8a1ade;
+      OutlineSize: 1.5;
+      ContentHeight: 10;
+    }
+    Label #Enabled {
+      Text: "Enabled";
+      Style: (
+        FontSize: 12,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Anchor: (Left: 2, Top: 4, Bottom: 2);
+      Padding: (Left: 6, Right: 6, Top: 1, Bottom: 0);
+      Background: (Color: #32ec1a83);
+      OutlineColor: #32ec1ade;
+      OutlineSize: 1.5;
+      ContentHeight: 10;
+      Visible: false;
+    }
+    Label #Disabled {
+      Text: "Disabled";
+      Style: (
+        FontSize: 12,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Anchor: (Left: 2, Top: 4, Bottom: 2);
+      Padding: (Left: 6, Right: 6, Top: 1, Bottom: 0);
+      Background: (Color: #ec211a83);
+      OutlineColor: #ec211ade;
+      OutlineSize: 1.5;
+      ContentHeight: 10;
+      Visible: false;
+    }
+    Label #IncludesAssets {
+      Text: "Includes Assets";
+      Style: (
+        FontSize: 12,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Anchor: (Left: 2, Top: 4, Bottom: 2);
+      Padding: (Left: 6, Right: 6, Top: 1, Bottom: 0);
+      Background: (Color: #c21aec83);
+      OutlineColor: #c21aecde;
+      OutlineSize: 1.5;
+      ContentHeight: 10;
+      Visible: false;
+    }
+  }
+  
+
+  Label #ModDescription {
+    Style: (
+      FontSize: 14,
+      RenderBold: false,
+      TextColor: #ffffff,
+      Wrap: true
+    );
+    Anchor: (Left: 10);
+    Padding: (Right: 5);
+    Overscroll: true;
+  }
+
+  Label #Website{
+    Anchor: (Left: 10);
+    Style: (
+      FontSize: 12,
+      RenderBold: false,
+      TextColor: #37a3ebff,
+      Wrap: true
+    );
+  }
+
+  Label #AuthorList{
+    Anchor: (Left: 10);
+    Style: (
+      FontSize: 12,
+      RenderBold: false,
+      TextColor: #ffffff7e,
+      Wrap: true
+    );
+  }
+
+  
+
+}
+}
