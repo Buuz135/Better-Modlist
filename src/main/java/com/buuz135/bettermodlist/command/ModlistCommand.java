@@ -22,7 +22,7 @@ import static com.hypixel.hytale.server.core.command.commands.player.inventory.I
 public class ModlistCommand extends AbstractAsyncCommand {
 
     public ModlistCommand() {
-        super("modlist", "Shows the modlist" );
+        super("modlist", "Shows the modlist");
         this.setPermissionGroup(GameMode.Adventure);
     }
 

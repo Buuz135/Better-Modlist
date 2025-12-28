@@ -1,8 +1,6 @@
 package com.buuz135.bettermodlist.gui;
 
 
-import com.buuz135.bettermodlist.Main;
-import com.buuz135.bettermodlist.util.MessageHelper;
 import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -12,19 +10,13 @@ import com.hypixel.hytale.common.plugin.PluginManifest;
 import com.hypixel.hytale.component.ComponentAccessor;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.protocol.AssetPackManifest;
 import com.hypixel.hytale.protocol.CustomPageLifetime;
 import com.hypixel.hytale.protocol.CustomUIEventBindingType;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.AssetModule;
 import com.hypixel.hytale.server.core.asset.common.CommonAssetRegistry;
-import com.hypixel.hytale.server.core.command.commands.debug.packs.PacksCommand;
-import com.hypixel.hytale.server.core.command.system.MatchResult;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
-import com.hypixel.hytale.server.core.plugin.PluginClassLoader;
 import com.hypixel.hytale.server.core.plugin.PluginManager;
-import com.hypixel.hytale.server.core.plugin.registry.AssetRegistry;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
@@ -32,10 +24,8 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
-import java.awt.*;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData> {
@@ -43,8 +33,8 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
     private String searchQuery;
     private final List<PluginManifest> visibleItems;
     private boolean showOnlyWithDescription;
-    private List<PluginManifest> plugins;
-    private List<PluginManifest> assetPacks;
+    private final List<PluginManifest> plugins;
+    private final List<PluginManifest> assetPacks;
 
     public ModListGui(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
         super(playerRef, lifetime, SearchGuiData.CODEC);
@@ -68,7 +58,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
     @Override
     public void handleDataEvent(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull SearchGuiData data) {
         super.handleDataEvent(ref, store, data);
-        if (data.showOnlyDesc != null){
+        if (data.showOnlyDesc != null) {
             this.showOnlyWithDescription = !this.showOnlyWithDescription;
             UICommandBuilder commandBuilder = new UICommandBuilder();
             UIEventBuilder eventBuilder = new UIEventBuilder();
@@ -113,7 +103,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
                     this.visibleItems.add(pluginManifest);
                     continue;
                 }
-                if (pluginManifest.getAuthors().stream().anyMatch(authorInfo -> authorInfo.getName().toLowerCase().contains(this.searchQuery))){
+                if (pluginManifest.getAuthors().stream().anyMatch(authorInfo -> authorInfo.getName().toLowerCase().contains(this.searchQuery))) {
                     this.visibleItems.add(pluginManifest);
                     continue;
                 }
@@ -129,7 +119,8 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         for (PluginManifest value : items) {
             var isAssetPack = assetPacks.contains(value);
             if (isAssetPack && plugins.stream().anyMatch(pluginManifest -> pluginManifest.includesAssetPack()
-                    && pluginManifest.getGroup().equals(value.getGroup()) && pluginManifest.getName().equals(value.getName()))) continue;
+                    && pluginManifest.getGroup().equals(value.getGroup()) && pluginManifest.getName().equals(value.getName())))
+                continue;
 
             uiCommandBuilder.append("#ModCards", "Pages/BetterModlistEntry.ui");
             uiCommandBuilder.set("#ModCards[" + i + "] #ModName.Text", value.getName());
@@ -143,13 +134,13 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
             uiCommandBuilder.set("#ModCards[" + i + "] #ModVersion.Text", version);
 
             var authors = "By: ";
-            if (value.getAuthors().isEmpty()){
+            if (value.getAuthors().isEmpty()) {
                 authors += value.getGroup();
             } else {
                 authors += value.getAuthors().stream().map(AuthorInfo::getName).reduce((a, b) -> a + ", " + b).orElse("");
             }
             uiCommandBuilder.set("#ModCards[" + i + "] #AuthorList.Text", authors);
-            if (isAssetPack){
+            if (isAssetPack) {
                 uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", true);
                 uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", false);
                 uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", true);
@@ -166,7 +157,9 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
                 uiCommandBuilder.set("#ModCards[" + i + "] #Website.Visible", false);
             }
             var iconName = value.getGroup() + "_" + value.getName() + ".png";
-            if (CommonAssetRegistry.hasCommonAsset("UI/Custom/" + iconName)) uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", iconName);
+            if (CommonAssetRegistry.hasCommonAsset("UI/Custom/" + iconName)){
+                uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", iconName);
+            }
             ++i;
         }
     }
@@ -174,7 +167,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
     public static class SearchGuiData {
         static final String KEY_SHOW_ONLY_DESC = "ShowOnlyDesc";
         static final String KEY_SEARCH_QUERY = "@SearchQuery";
-        public static final BuilderCodec<SearchGuiData> CODEC = BuilderCodec.<SearchGuiData>builder(SearchGuiData.class, SearchGuiData::new)
+        public static final BuilderCodec<SearchGuiData> CODEC = BuilderCodec.builder(SearchGuiData.class, SearchGuiData::new)
                 .addField(new KeyedCodec<>(KEY_SEARCH_QUERY, Codec.STRING), (searchGuiData, s) -> searchGuiData.searchQuery = s, searchGuiData -> searchGuiData.searchQuery)
                 .addField(new KeyedCodec<>(KEY_SHOW_ONLY_DESC, Codec.STRING), (searchGuiData, s) -> searchGuiData.showOnlyDesc = s, searchGuiData -> searchGuiData.showOnlyDesc).build();
 
