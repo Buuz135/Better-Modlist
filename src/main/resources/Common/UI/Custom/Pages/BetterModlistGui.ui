@@ -4,7 +4,7 @@ $C.@PageOverlay {
   Anchor: (Top: 40);
 
   $C.@Container {
-    Anchor: (Width: 600, Height: 669);
+    Anchor: (Width: 650, Height: 669);
 
     #Title {
       Group {
@@ -35,7 +35,7 @@ $C.@PageOverlay {
         }
 
         Group #ModList {
-          Anchor: (Width: 580);
+          Anchor: (Width: 630);
           FlexWeight: 1;
           LayoutMode: TopScrolling;
           Padding: (Left: 4);

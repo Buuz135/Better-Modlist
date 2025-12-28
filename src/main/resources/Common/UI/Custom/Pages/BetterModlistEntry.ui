@@ -9,7 +9,7 @@ Group {
 
   Group #ModLogo{
     Anchor: (Width: 96, Height: 96, Left: 4);
-    Background: "../Buuz135_BetterModlist.png";
+    Background: "../mod_icon_not_found.png";
     Padding: (Full: 5);
   }
 

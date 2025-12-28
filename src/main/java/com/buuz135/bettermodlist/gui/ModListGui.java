@@ -3,7 +3,7 @@ package com.buuz135.bettermodlist.gui;
 
 import com.buuz135.bettermodlist.Main;
 import com.buuz135.bettermodlist.util.MessageHelper;
-import com.hypixel.hytale.assetstore.AssetRegistry;
+import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -12,14 +12,19 @@ import com.hypixel.hytale.common.plugin.PluginManifest;
 import com.hypixel.hytale.component.ComponentAccessor;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.AssetPackManifest;
 import com.hypixel.hytale.protocol.CustomPageLifetime;
 import com.hypixel.hytale.protocol.CustomUIEventBindingType;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.AssetModule;
+import com.hypixel.hytale.server.core.asset.common.CommonAssetRegistry;
+import com.hypixel.hytale.server.core.command.commands.debug.packs.PacksCommand;
 import com.hypixel.hytale.server.core.command.system.MatchResult;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.plugin.PluginClassLoader;
 import com.hypixel.hytale.server.core.plugin.PluginManager;
+import com.hypixel.hytale.server.core.plugin.registry.AssetRegistry;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
@@ -35,14 +40,19 @@ import java.util.List;
 
 public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData> {
 
-    private String searchQuery = "";
-    private final List<PluginManifest> visibleItems = new ArrayList<>();
+    private String searchQuery;
+    private final List<PluginManifest> visibleItems;
     private boolean showOnlyWithDescription;
+    private List<PluginManifest> plugins;
+    private List<PluginManifest> assetPacks;
 
     public ModListGui(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
         super(playerRef, lifetime, SearchGuiData.CODEC);
         this.searchQuery = "";
+        this.visibleItems = new ArrayList<>();
         this.showOnlyWithDescription = true;
+        this.plugins = new ArrayList<>(PluginManager.get().getAvailablePlugins().values());
+        this.assetPacks = new ArrayList<>(AssetModule.get().getAssetPacks().stream().map(AssetPack::getManifest).toList());
     }
 
     @Override
@@ -76,7 +86,9 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
 
     private void buildList(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder commandBuilder, @Nonnull UIEventBuilder eventBuilder, @Nonnull ComponentAccessor<EntityStore> componentAccessor) {
         List<PluginManifest> itemList = new ArrayList<>();
-        itemList.addAll(PluginManager.get().getAvailablePlugins().values());
+        itemList.addAll(this.plugins);
+        itemList.addAll(this.assetPacks);
+        itemList.sort(Comparator.comparing(PluginManifest::getName));
 
         Player playerComponent = componentAccessor.getComponent(ref, Player.getComponentType());
 
@@ -115,6 +127,10 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         uiCommandBuilder.appendInline("#Main #ModList", "Group #ModCards { LayoutMode: Left; }");
         var i = 0;
         for (PluginManifest value : items) {
+            var isAssetPack = assetPacks.contains(value);
+            if (isAssetPack && plugins.stream().anyMatch(pluginManifest -> pluginManifest.includesAssetPack()
+                    && pluginManifest.getGroup().equals(value.getGroup()) && pluginManifest.getName().equals(value.getName()))) continue;
+
             uiCommandBuilder.append("#ModCards", "Pages/BetterModlistEntry.ui");
             uiCommandBuilder.set("#ModCards[" + i + "] #ModName.Text", value.getName());
             if (value.getDescription() != null) {
@@ -133,16 +149,24 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
                 authors += value.getAuthors().stream().map(AuthorInfo::getName).reduce((a, b) -> a + ", " + b).orElse("");
             }
             uiCommandBuilder.set("#ModCards[" + i + "] #AuthorList.Text", authors);
-            uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", PluginManager.get().getPlugins().stream().anyMatch(plugin -> plugin.getManifest().equals(value)));
-            uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", PluginManager.get().getPlugins().stream().noneMatch(plugin -> plugin.getManifest().equals(value)));
-            uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", value.includesAssetPack());
+            if (isAssetPack){
+                uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", true);
+                uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", false);
+                uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", true);
+                uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Text", "Asset Pack");
+                uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", "pack_icon_not_found.png");
+            } else {
+                uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", PluginManager.get().getPlugins().stream().anyMatch(plugin -> plugin.getManifest().equals(value)));
+                uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", PluginManager.get().getPlugins().stream().noneMatch(plugin -> plugin.getManifest().equals(value)));
+                uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", value.includesAssetPack());
+            }
             if (value.getWebsite() != null) {
                 uiCommandBuilder.set("#ModCards[" + i + "] #Website.Text", value.getWebsite());
             } else {
                 uiCommandBuilder.set("#ModCards[" + i + "] #Website.Visible", false);
             }
-
-            if (!value.getGroup().equals("Hytale")) uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", value.getGroup() + "_" + value.getName() + ".png");
+            var iconName = value.getGroup() + "_" + value.getName() + ".png";
+            if (CommonAssetRegistry.hasCommonAsset("UI/Custom/" + iconName)) uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", iconName);
             ++i;
         }
     }
