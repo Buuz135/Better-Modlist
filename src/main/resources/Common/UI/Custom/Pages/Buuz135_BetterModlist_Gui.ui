@@ -1,7 +1,6 @@
 $C = "../Common.ui";
 
 $C.@PageOverlay {
-  Anchor: (Top: 40);
 
   $C.@Container {
     Anchor: (Width: 650, Height: 669);

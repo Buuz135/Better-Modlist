@@ -47,7 +47,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
 
     @Override
     public void build(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder uiCommandBuilder, @Nonnull UIEventBuilder uiEventBuilder, @Nonnull Store<EntityStore> store) {
-        uiCommandBuilder.append("Pages/BetterModlistGui.ui");
+        uiCommandBuilder.append("Pages/Buuz135_BetterModlist_Gui.ui");
         uiCommandBuilder.set("#SearchInput.Value", this.searchQuery);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#SearchInput", EventData.of("@SearchQuery", "#SearchInput.Value"), false);
         uiCommandBuilder.set("#ShowOnlyWithDesc #CheckBox.Value", this.showOnlyWithDescription);
@@ -122,7 +122,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
                     && pluginManifest.getGroup().equals(value.getGroup()) && pluginManifest.getName().equals(value.getName())))
                 continue;
 
-            uiCommandBuilder.append("#ModCards", "Pages/BetterModlistEntry.ui");
+            uiCommandBuilder.append("#ModCards", "Pages/Buuz135_BetterModlist_Entry.ui");
             uiCommandBuilder.set("#ModCards[" + i + "] #ModName.Text", value.getName());
             if (value.getDescription() != null) {
                 uiCommandBuilder.set("#ModCards[" + i + "] #ModDescription.Text", value.getDescription());
