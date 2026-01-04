@@ -31,7 +31,7 @@ import java.util.List;
 public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData> {
 
     private String searchQuery;
-    private final List<PluginManifest> visibleItems;
+    private final List<CustomManifest> visibleItems;
     private boolean showOnlyWithDescription;
     private final List<PluginManifest> plugins;
     private final List<PluginManifest> assetPacks;
@@ -75,35 +75,39 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
     }
 
     private void buildList(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder commandBuilder, @Nonnull UIEventBuilder eventBuilder, @Nonnull ComponentAccessor<EntityStore> componentAccessor) {
-        List<PluginManifest> itemList = new ArrayList<>();
-        itemList.addAll(this.plugins);
-        itemList.addAll(this.assetPacks);
-        itemList.sort(Comparator.comparing(PluginManifest::getName));
-
         Player playerComponent = componentAccessor.getComponent(ref, Player.getComponentType());
 
         assert playerComponent != null;
 
+        List<CustomManifest> itemList = new ArrayList<>(this.plugins.stream().map(value -> new CustomManifest(value, false)).toList());
+        for (PluginManifest value : this.assetPacks) {
+            if (itemList.stream().anyMatch(pluginManifest -> pluginManifest.manifest.getGroup().equals(value.getGroup()) && pluginManifest.manifest.getName().equals(value.getName()))) {
+                continue;
+            }
+            itemList.add(new CustomManifest(value, true));
+        }
+        itemList.sort(Comparator.comparing(customManifest -> customManifest.manifest.getName()));
+
         if (this.searchQuery.isEmpty()) {
             this.visibleItems.clear();
-            for (PluginManifest pluginManifest : itemList) {
-                if (this.showOnlyWithDescription && pluginManifest.getDescription() == null) continue;
+            for (CustomManifest pluginManifest : itemList) {
+                if (this.showOnlyWithDescription && pluginManifest.manifest.getDescription() == null) continue;
                 this.visibleItems.add(pluginManifest);
             }
         } else {
             this.visibleItems.clear();
-            for (PluginManifest pluginManifest : itemList) {
-                if (this.showOnlyWithDescription && pluginManifest.getDescription() == null) continue;
-                if (pluginManifest.getName().toLowerCase().contains(this.searchQuery)) {
+            for (CustomManifest pluginManifest : itemList) {
+                if (this.showOnlyWithDescription && pluginManifest.manifest.getDescription() == null) continue;
+                if (pluginManifest.manifest.getName().toLowerCase().contains(this.searchQuery)) {
                     this.visibleItems.add(pluginManifest);
                     continue;
                 }
-                var description = pluginManifest.getDescription() != null ? pluginManifest.getDescription() : "No description";
+                var description = pluginManifest.manifest.getDescription() != null ? pluginManifest.manifest.getDescription() : "No description";
                 if (description.contains(this.searchQuery)) {
                     this.visibleItems.add(pluginManifest);
                     continue;
                 }
-                if (pluginManifest.getAuthors().stream().anyMatch(authorInfo -> authorInfo.getName().toLowerCase().contains(this.searchQuery))) {
+                if (pluginManifest.manifest.getAuthors().stream().anyMatch(authorInfo -> authorInfo.getName().toLowerCase().contains(this.searchQuery))) {
                     this.visibleItems.add(pluginManifest);
                     continue;
                 }
@@ -112,55 +116,53 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         this.buildButtons(this.visibleItems, playerComponent, commandBuilder, eventBuilder);
     }
 
-    private void buildButtons(List<PluginManifest> items, @Nonnull Player playerComponent, @Nonnull UICommandBuilder uiCommandBuilder, @Nonnull UIEventBuilder eventBuilder) {
+    private void buildButtons(List<CustomManifest> list, @Nonnull Player playerComponent, @Nonnull UICommandBuilder uiCommandBuilder, @Nonnull UIEventBuilder eventBuilder) {
         uiCommandBuilder.clear("#ModCards");
         uiCommandBuilder.appendInline("#Main #ModList", "Group #ModCards { LayoutMode: Left; }");
-        var i = 0;
-        for (PluginManifest value : items) {
-            var isAssetPack = assetPacks.contains(value);
-            if (isAssetPack && plugins.stream().anyMatch(pluginManifest -> pluginManifest.includesAssetPack()
-                    && pluginManifest.getGroup().equals(value.getGroup()) && pluginManifest.getName().equals(value.getName())))
-                continue;
 
-            uiCommandBuilder.append("#ModCards", "Pages/Buuz135_BetterModlist_Entry.ui");
-            uiCommandBuilder.set("#ModCards[" + i + "] #ModName.Text", value.getName());
-            if (value.getDescription() != null) {
-                uiCommandBuilder.set("#ModCards[" + i + "] #ModDescription.Text", value.getDescription());
-            } else {
-                uiCommandBuilder.remove("#ModCards[" + i + "] #ModDescription");
-            }
-            var version = "v" + value.getVersion();
-            while (version.length() < 8) version = " " + version + " ";
-            uiCommandBuilder.set("#ModCards[" + i + "] #ModVersion.Text", version);
+        for (int i = 0; i < list.size(); i++) {
+            generateModList(list.get(i).manifest, list.get(i).isAssetPack, i, playerComponent, uiCommandBuilder, eventBuilder);
+        }
+    }
 
-            var authors = "By: ";
-            if (value.getAuthors().isEmpty()) {
-                authors += value.getGroup();
-            } else {
-                authors += value.getAuthors().stream().map(AuthorInfo::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            }
-            uiCommandBuilder.set("#ModCards[" + i + "] #AuthorList.Text", authors);
-            if (isAssetPack) {
-                uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", true);
-                uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", false);
-                uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", true);
-                uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Text", "Asset Pack");
-                uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", "pack_icon_not_found.png");
-            } else {
-                uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", PluginManager.get().getPlugins().stream().anyMatch(plugin -> plugin.getManifest().equals(value)));
-                uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", PluginManager.get().getPlugins().stream().noneMatch(plugin -> plugin.getManifest().equals(value)));
-                uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", value.includesAssetPack());
-            }
-            if (value.getWebsite() != null) {
-                uiCommandBuilder.set("#ModCards[" + i + "] #Website.Text", value.getWebsite());
-            } else {
-                uiCommandBuilder.set("#ModCards[" + i + "] #Website.Visible", false);
-            }
-            var iconName = value.getGroup() + "_" + value.getName() + ".png";
-            if (CommonAssetRegistry.hasCommonAsset("UI/Custom/" + iconName)){
-                uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", iconName);
-            }
-            ++i;
+    private void generateModList(PluginManifest value, boolean isAssetPack, int i, @Nonnull Player playerComponent, @Nonnull UICommandBuilder uiCommandBuilder, @Nonnull UIEventBuilder eventBuilder) {
+        uiCommandBuilder.append("#ModCards", "Pages/Buuz135_BetterModlist_Entry.ui");
+        uiCommandBuilder.set("#ModCards[" + i + "] #ModName.Text", value.getName());
+        if (value.getDescription() != null) {
+            uiCommandBuilder.set("#ModCards[" + i + "] #ModDescription.Text", value.getDescription());
+        } else {
+            uiCommandBuilder.remove("#ModCards[" + i + "] #ModDescription");
+        }
+        var version = "v" + value.getVersion();
+        while (version.length() < 8) version = " " + version + " ";
+        uiCommandBuilder.set("#ModCards[" + i + "] #ModVersion.Text", version);
+
+        var authors = "By: ";
+        if (value.getAuthors().isEmpty()) {
+            authors += value.getGroup();
+        } else {
+            authors += value.getAuthors().stream().map(AuthorInfo::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        }
+        uiCommandBuilder.set("#ModCards[" + i + "] #AuthorList.Text", authors);
+        if (isAssetPack) {
+            uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", true);
+            uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", false);
+            uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", true);
+            uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Text", "Asset Pack");
+            uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", "pack_icon_not_found.png");
+        } else {
+            uiCommandBuilder.set("#ModCards[" + i + "] #Enabled.Visible", PluginManager.get().getPlugins().stream().anyMatch(plugin -> plugin.getManifest().equals(value)));
+            uiCommandBuilder.set("#ModCards[" + i + "] #Disabled.Visible", PluginManager.get().getPlugins().stream().noneMatch(plugin -> plugin.getManifest().equals(value)));
+            uiCommandBuilder.set("#ModCards[" + i + "] #IncludesAssets.Visible", value.includesAssetPack());
+        }
+        if (value.getWebsite() != null) {
+            uiCommandBuilder.set("#ModCards[" + i + "] #Website.Text", value.getWebsite());
+        } else {
+            uiCommandBuilder.set("#ModCards[" + i + "] #Website.Visible", false);
+        }
+        var iconName = value.getGroup() + "_" + value.getName() + ".png";
+        if (CommonAssetRegistry.hasCommonAsset("UI/Custom/" + iconName)){
+            uiCommandBuilder.set("#ModCards[" + i + "] #ModLogo.Background", iconName);
         }
     }
 
@@ -174,6 +176,16 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         private String showOnlyDesc;
         private String searchQuery;
 
+    }
+
+    public class CustomManifest {
+        public PluginManifest manifest;
+        public boolean isAssetPack;
+
+        public CustomManifest(PluginManifest manifest, boolean isAssetPack) {
+            this.manifest = manifest;
+            this.isAssetPack = isAssetPack;
+        }
     }
 
 }
