@@ -28,6 +28,10 @@ $C.@PageOverlay {
             FlexWeight: 1;
           }
 
+          $C.@CheckBoxWithLabel #ShowHytale{
+            @Text = "Show Hytale";
+          }
+
           $C.@CheckBoxWithLabel #ShowOnlyWithDesc{
             @Text = "Show Only Mods With Descriptions";
           }

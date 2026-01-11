@@ -33,6 +33,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
     private String searchQuery;
     private final List<CustomManifest> visibleItems;
     private boolean showOnlyWithDescription;
+    private boolean showHytale;
     private final List<PluginManifest> plugins;
     private final List<PluginManifest> assetPacks;
 
@@ -41,6 +42,7 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         this.searchQuery = "";
         this.visibleItems = new ArrayList<>();
         this.showOnlyWithDescription = true;
+        this.showHytale = true;
         this.plugins = new ArrayList<>(PluginManager.get().getAvailablePlugins().values());
         this.assetPacks = new ArrayList<>(AssetModule.get().getAssetPacks().stream().map(AssetPack::getManifest).toList());
     }
@@ -52,6 +54,8 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#SearchInput", EventData.of("@SearchQuery", "#SearchInput.Value"), false);
         uiCommandBuilder.set("#ShowOnlyWithDesc #CheckBox.Value", this.showOnlyWithDescription);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ShowOnlyWithDesc #CheckBox", EventData.of("ShowOnlyDesc", "CAT"), false);
+        uiCommandBuilder.set("#ShowHytale #CheckBox.Value", this.showHytale);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#ShowHytale #CheckBox", EventData.of("ShowHytale", "CAT"), false);
         this.buildList(ref, uiCommandBuilder, uiEventBuilder, store);
     }
 
@@ -60,6 +64,13 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
         super.handleDataEvent(ref, store, data);
         if (data.showOnlyDesc != null) {
             this.showOnlyWithDescription = !this.showOnlyWithDescription;
+            UICommandBuilder commandBuilder = new UICommandBuilder();
+            UIEventBuilder eventBuilder = new UIEventBuilder();
+            this.buildList(ref, commandBuilder, eventBuilder, store);
+            this.sendUpdate(commandBuilder, eventBuilder, false);
+        }
+        if (data.showHytale != null) {
+            this.showHytale = !this.showHytale;
             UICommandBuilder commandBuilder = new UICommandBuilder();
             UIEventBuilder eventBuilder = new UIEventBuilder();
             this.buildList(ref, commandBuilder, eventBuilder, store);
@@ -92,12 +103,14 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
             this.visibleItems.clear();
             for (CustomManifest pluginManifest : itemList) {
                 if (this.showOnlyWithDescription && pluginManifest.manifest.getDescription() == null) continue;
+                if (!this.showHytale && pluginManifest.manifest.getGroup().equals("Hytale")) continue;
                 this.visibleItems.add(pluginManifest);
             }
         } else {
             this.visibleItems.clear();
             for (CustomManifest pluginManifest : itemList) {
                 if (this.showOnlyWithDescription && pluginManifest.manifest.getDescription() == null) continue;
+                if (!this.showHytale && pluginManifest.manifest.getGroup().equals("Hytale")) continue;
                 if (pluginManifest.manifest.getName().toLowerCase().contains(this.searchQuery)) {
                     this.visibleItems.add(pluginManifest);
                     continue;
@@ -168,13 +181,17 @@ public class ModListGui extends InteractiveCustomUIPage<ModListGui.SearchGuiData
 
     public static class SearchGuiData {
         static final String KEY_SHOW_ONLY_DESC = "ShowOnlyDesc";
+        static final String KEY_SHOW_HYTALE = "ShowHytale";
         static final String KEY_SEARCH_QUERY = "@SearchQuery";
         public static final BuilderCodec<SearchGuiData> CODEC = BuilderCodec.builder(SearchGuiData.class, SearchGuiData::new)
                 .addField(new KeyedCodec<>(KEY_SEARCH_QUERY, Codec.STRING), (searchGuiData, s) -> searchGuiData.searchQuery = s, searchGuiData -> searchGuiData.searchQuery)
-                .addField(new KeyedCodec<>(KEY_SHOW_ONLY_DESC, Codec.STRING), (searchGuiData, s) -> searchGuiData.showOnlyDesc = s, searchGuiData -> searchGuiData.showOnlyDesc).build();
+                .addField(new KeyedCodec<>(KEY_SHOW_ONLY_DESC, Codec.STRING), (searchGuiData, s) -> searchGuiData.showOnlyDesc = s, searchGuiData -> searchGuiData.showOnlyDesc)
+                .addField(new KeyedCodec<>(KEY_SHOW_HYTALE, Codec.STRING), (searchGuiData, s) -> searchGuiData.showHytale = s, searchGuiData -> searchGuiData.showHytale)
+                .build();
 
         private String showOnlyDesc;
         private String searchQuery;
+        private String showHytale;
 
     }
 
