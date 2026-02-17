@@ -1,7 +1,7 @@
 {
   "Group": "Buuz135",
   "Name": "BetterModlist",
-  "Version": "1.0.4",
+  "Version": "1.0.5",
   "Description": "Adds a better modlist to the game",
   "Authors": [
     {
@@ -9,7 +9,7 @@
     }
   ],
   "Website": "https://buuz135.com/",
-  "ServerVersion": "*",
+  "ServerVersion": "2026.02.17-255364b8e",
   "Dependencies": {
     "Hytale:EntityModule": "*"
   },
