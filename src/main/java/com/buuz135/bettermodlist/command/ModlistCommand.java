@@ -23,23 +23,22 @@ public class ModlistCommand extends AbstractAsyncCommand {
 
     public ModlistCommand() {
         super("modlist", "Shows the modlist");
-        this.setPermissionGroup(GameMode.Adventure);
+        this.setPermissionGroups("hytale:Adventurer");
     }
 
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(CommandContext commandContext) {
         CommandSender sender = commandContext.sender();
-        if (sender instanceof Player player) {
-            player.getWorldMapTracker().tick(0);
-            Ref<EntityStore> ref = player.getReference();
+        if (sender instanceof PlayerRef playerRef) {
+            Ref<EntityStore> ref = playerRef.getReference();
             if (ref != null && ref.isValid()) {
                 Store<EntityStore> store = ref.getStore();
                 World world = store.getExternalData().getWorld();
                 return CompletableFuture.runAsync(() -> {
-                    PlayerRef playerRefComponent = store.getComponent(ref, PlayerRef.getComponentType());
-                    if (playerRefComponent != null) {
-                        player.getPageManager().openCustomPage(ref, store, new ModListGui(playerRefComponent, CustomPageLifetime.CanDismiss));
+                    Player player = store.getComponent(ref, Player.getComponentType());
+                    if (player != null) {
+                        player.getPageManager().openCustomPage(ref, store, new ModListGui(playerRef, CustomPageLifetime.CanDismiss));
                     }
                 }, world);
             } else {
